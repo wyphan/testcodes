@@ -18,6 +18,7 @@ PROGRAM dot_product
 
   ! Tolerance for error checking
   REAL(KIND=dp), PARAMETER :: tol = 10._dp**(-10)
+
   ! Timing subroutine
   INTRINSIC :: DATE_AND_TIME
 
@@ -41,7 +42,7 @@ PROGRAM dot_product
   ! Allocate vectors and result variable on device (GPU)
   !$ACC DATA CREATE( vecA, vecB, result )
 
-  ! Initiqlize vectors on device
+  ! Initialize vectors on device
   !$ACC PARALLEL LOOP PRESENT( vecA, vecB ) COPYIN( N )
   DO i = 1, N
      vecA(i) = REAL( i,   KIND=dp )
