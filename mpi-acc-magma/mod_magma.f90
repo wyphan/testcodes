@@ -76,7 +76,7 @@ interface
                dx, incx, &
         beta,  dy, incy, &
         queue ) &
-    bind(C, name="magmablas_zgemv")
+    bind(C, name="magmablas_dgemv")
         use iso_c_binding
         integer(c_int), value :: trans, m, n, ldda, incx, incy
         real(c_double), value :: alpha, beta
@@ -84,6 +84,7 @@ interface
         type(c_ptr),    value :: queue  !! queue_t
     end subroutine
 
+end interface
     
 !! =============================================================================
 !! Fortran routines & functions

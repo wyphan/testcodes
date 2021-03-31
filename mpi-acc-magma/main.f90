@@ -20,7 +20,7 @@ PROGRAM mpi_acc_magma
 
   ! Arrays
   REAL(KIND=dd), DIMENSION(:,:), ALLOCATABLE :: matA
-  REAL(KIND=dd), DIMENSION(:), ALLOCATABLE :: vecX, vecY, vecYcheck
+  REAL(KIND=dd), DIMENSION(:), ALLOCATABLE :: vecX, vecY, vecY1, check
 
   ! Scalars
   REAL(KIND=dd) :: alpha, beta, error
@@ -53,7 +53,8 @@ PROGRAM mpi_acc_magma
   ALLOCATE( matA(N,N) )
   ALLOCATE( vecX(N) )
   ALLOCATE( vecY(N) )
-  ALLOCATE( vecYcheck(N) )
+  ALLOCATE( vecY1(N) )
+  ALLOCATE( check(N) )
   !$ACC DATA CREATE( matA, vecX, vecY, alpha, beta ) COPYIN( N )
 
   ! Fill in arrays
@@ -61,7 +62,7 @@ PROGRAM mpi_acc_magma
      DO i = 1, N
         matA(i,j) = REAL( i + j, KIND=dd )
      END DO ! i
-     vecX(i,j) = REAL( j, KIND=dd )
+     vecX(j) = REAL( j, KIND=dd )
   END DO ! j
 
   ! Set scalars
@@ -75,11 +76,12 @@ PROGRAM mpi_acc_magma
   ! Call MAGMA to perform DGEMV on device
   !$ACC HOST_DATA USE_DEVICE( matA, vecX, vecY )
   CALL magmablas_dgemv( MagmaNoTrans, N, N, &
-                        alpha, C_PTR(matA), N, &
-                               C_PTR(vecX), 1, &
-                        beta,  C_PTR(vecY), 1, &
+                        alpha, C_LOC(matA), N, &
+                               C_LOC(vecX), 1, &
+                        beta,  C_LOC(vecY), 1, &
                         queue )
-  CALL magma_sync_queue( queue )
+  !$ACC END HOST_DATA
+  CALL magma_queue_sync( queue )
 
   ! Copy results to device
   !$ACC UPDATE HOST( vecY )
@@ -89,8 +91,9 @@ PROGRAM mpi_acc_magma
   CALL DGEMV( 'N', N, N, &
               alpha, matA, N, &
                      vecX, 1, &
-              beta,  vecYcheck, 1 )
-  error = DNRM2( N, ABS( vecYcheck - vecY ), 1 )
+              beta,  vecY1, 1 )
+  check(:) = vecY(:) - vecY1(:)
+  error = DNRM2( N, check, 1 )
   WRITE(*,*) 'Rank ', myid, ': error = ', error
 
   ! Clean up
@@ -98,7 +101,8 @@ PROGRAM mpi_acc_magma
   DEALLOCATE( matA )
   DEALLOCATE( vecX )
   DEALLOCATE( vecY )
-  DEALLOCATE( vecYcheck )
+  DEALLOCATE( vecY1 )
+  DEALLOCATE( check )
 
   ! Finalize MAGMA
   CALL magma_queue_destroy( queue )

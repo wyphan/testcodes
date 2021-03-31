@@ -3,37 +3,41 @@
 #==============================================================================
 
 # GCC
-gccopts  = -g2 -Ofast -fopenacc -foffload=amdgcn-amdhsa="-march=gfx900"
+gccopts  = -cpp -g2 -Ofast -fopenacc -foffload=amdgcn-amdhsa="-march=gfx900"
 
 # NVHPC
-nvopts   = -gopt -fast -acc=gpu -Minfo=accel -traceback
+nvopts   = -Mpreprocess -gopt -fast -acc=gpu -gpu=managed -Minfo=accel -traceback
 
 #==============================================================================
 # Libraries
 #==============================================================================
 
 # AMD AOCL
-aocldir  = /opt/AMD/aocl/aocl-linux-aocc-2.2.0
-aocllink = -L$(aocldir)/libs -lblis-mt
+aocldir     = /opt/AMD/aocl/aocl-linux-aocc-2.2.0
+aocllink    = -L$(aocldir)/libs -lblis-mt
 
 # Intel MKL
-mklincgcc  = -m64  -I"${MKLROOT}/include"
-mkllinkgcc = -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed \
-             -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
-mklincnv   = -I"${MKLROOT}/include"
-mkllinknv  = -L${MKLROOT}/lib/intel64 \
-             -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
+mklincgcc   = -m64  -I"${MKLROOT}/include"
+mkllinkgcc  = -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed \
+              -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
+mklincnv    = -I"${MKLROOT}/include"
+mkllinknv   = -L${MKLROOT}/lib/intel64 \
+              -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
+
+# Reference BLAS
+refblasdir  = /opt/reflapack/lapack-3.9.0/nv-20.11
+refblaslink = -L$(refblasdir)/lib -lblas
 
 # OpenBLAS
-oblasdir  = /opt/openblas/openblas-0.3.10/gcc-9.3.0
-oblaslink = -L$(oblasdir)/lib -lopenblas
+oblasdir    = /opt/openblas/openblas-0.3.10/gcc-9.3.0
+oblaslink   = -L$(oblasdir)/lib -lopenblas
 
 # MAGMA
-#magmadir  = /opt/magma/magma-2.5.3/gcc-9.3.0+cuda11.0+openblas0.3.10
-magmadir  = /opt/magma/magma-2.5.4/nv20.11+cuda11.2+reflapack3.9.0
-#magmadir  = /opt/magma/hipmagma-2.0.0/gcc-10.2.0+rocm3.10.0+openblas0.3.10
-magmainc  = -I$(magmadir)/include
-magmalink = -L$(magmadir)/lib -lmagma
+#magmadir    = /opt/magma/magma-2.5.3/gcc-9.3.0+cuda11.0+openblas0.3.10
+magmadir    = /opt/magma/magma-2.5.4/nv20.11+cuda11.2+reflapack3.9.0
+#magmadir    = /opt/magma/hipmagma-2.0.0/gcc-10.2.0+rocm3.10.0+openblas0.3.10
+magmainc    = -I$(magmadir)/include
+magmalink   = -L$(magmadir)/lib -lmagma
 
 #==============================================================================
 # Pick your combination here
@@ -55,43 +59,39 @@ FC = mpif90
 #INC  = $(mklincnv)
 #LINK = $(mkllinknv) $(magmalink)
 
+# Reference BLAS, MAGMA
+LINK = $(refblaslink) $(magmalink)
+
 # OpenBLAS, MAGMA
-LINK = $(oblaslink) $(magmalink)
+#LINK = $(oblaslink) $(magmalink)
 
 #==============================================================================
 
-modules = mod_prec.f90 mod_blas.f90 mod_magma.f90
+modules = 
 
 .PHONY: main
 
-.SUFFIXES: .f90
-
 %.o: %.mod
+
+.SUFFIXES: .f90
 .f90.o:
 ifeq ($(COMPILER),gcc)
-	$(FC) $(gccopts) -c -o $*.o $<
-else ($(COMPILER),nv)
-	$(FC) $(nvopts) -c -o $*.o $<
+	$(FC) $(INC) $(gccopts) -c -o $@ $<
+else ifeq ($(COMPILER),nv)
+	$(FC) $(INC) $(nvopts) -c -o $@ $<
 else
-	$(FC) ${FCOPTS} -c -o $*.o $<
+	$(FC) $(INC) ${FCOPTS} -c -o $@ $<
 endif
 
-mod_blas.o: mod_blas.f90
+main: mod_prec.o mod_blas.o mod_magma.o main.o
 ifeq ($(COMPILER),gcc)
-	$(FC) $(INC) $(gccopts) -c -o $*.o $<
-else ($(COMPILER),nv)
-	$(FC) $(INC) $(nvopts) -c -o $*.o $<
+	$(FC) $(gccopts) *.o $(LINK) -o magmatest-gcc.x
+else ifeq ($(COMPILER),nv)
+	$(FC) $(nvopts) *.o $(LINK) -o magmatest-nv.x
 else
-	$(FC) $(INC) ${FCOPTS} -c -o $*.o $<
+	$(FC) ${FCOPTS} *.o $(LINK) -o magmatest-$(COMPILER).x
 endif
 
-
-main: $(modules)
-ifeq ($(COMPILER),gcc)
-	$(FC) $(F90_OPTS) main.f90 $(LINK) -o magmatest-gcc.x
-else ($(COMPILER),nv)
-	$(FC) $(F90_OPTS) main.f90 $(LINK) -o magmatest-nv.x
-endif
 
 clean:
 	-rm *.o *.mod
