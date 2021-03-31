@@ -34,7 +34,7 @@ xlflink=-L$(xlfdir)/lib -lxlf90_r
 xlsmplink=-L$(xlsmpdir)/lib -lxlsmp
 
 # AMD AOCL
-aocldir=/opt/amd/aocl/2.1
+aocldir=/opt/AMD/aocl/aocl-linux-aocc-2.2.0
 aocllink=-L$(aocldir)/libs -lblis-mt
 
 # OpenBLAS
@@ -83,7 +83,7 @@ pgimagma:
 llvm:
 	export CC=clang; export FC=flang; make flangaocl
 
-flangaocl: llvm
+flangaocl:
 	$(CC) $(clangopts) -c clock_gettime.c -o clock_gettime.o
 	$(FC) $(flangopts) -c zgemmtest.F90 -o zgemmtest.o
 	$(FC) $(flanglink) zgemmtest.o clock_gettime.o -o zgemm-flang-aocl $(aocllink)
