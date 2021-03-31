@@ -3,10 +3,10 @@
 #==============================================================================
 
 # GCC
-gccopts = -g2 -Ofast -fopenacc -foffload=amdgcn-amdhsa="-march=gfx900"
+gccopts  = -g2 -Ofast -fopenacc -foffload=amdgcn-amdhsa="-march=gfx900"
 
 # NVHPC
-nvopts = -gopt -fast -acc=gpu -Minfo=accel -traceback
+nvopts   = -gopt -fast -acc=gpu -Minfo=accel -traceback
 
 #==============================================================================
 # Libraries
@@ -31,7 +31,7 @@ oblaslink = -L$(oblasdir)/lib -lopenblas
 # MAGMA
 #magmadir  = /opt/magma/magma-2.5.3/gcc-9.3.0+cuda11.0+openblas0.3.10
 magmadir  = /opt/magma/magma-2.5.4/nv20.11+cuda11.2+reflapack3.9.0
-#magmadir  = /opt/magma/hipmagma-2.0.0/aomp11.8+rocm3.7.0+openblas0.3.10
+#magmadir  = /opt/magma/hipmagma-2.0.0/gcc-10.2.0+rocm3.10.0+openblas0.3.10
 magmainc  = -I$(magmadir)/include
 magmalink = -L$(magmadir)/lib -lmagma
 
@@ -39,42 +39,63 @@ magmalink = -L$(magmadir)/lib -lmagma
 # Pick your combination here
 #==============================================================================
 
+#COMPILER = gcc
+COMPILER = nv
+
+FC = mpif90
+
 # AMD AOCL, MAGMA
-#LINK    = $(aocllink) $(magmalink)
+#LINK = $(aocllink) $(magmalink)
 
 # Intel MKL, MAGMA (with GCC)
-#F90_INC = $(mklincgcc)
-#LINK    = $(mkllinkgcc) $(magmalink)
+#INC  = $(mklincgcc)
+#LINK = $(mkllinkgcc) $(magmalink)
 
 # Intel MKL, MAGMA (with PGI/NVHPC)
-#F90_INC = $(mklincnv)
-#LINK    = $(mkllinknv) $(magmalink)
+#INC  = $(mklincnv)
+#LINK = $(mkllinknv) $(magmalink)
 
 # OpenBLAS, MAGMA
-LINK    = $(oblaslink) $(magmalink)
+LINK = $(oblaslink) $(magmalink)
 
 #==============================================================================
 
 modules = mod_prec.f90 mod_blas.f90 mod_magma.f90
 
-.PHONY:
+.PHONY: main
 
 .SUFFIXES: .f90
 
 %.o: %.mod
 .f90.o:
-	$(FC) $(F90_OPTS) -c -o $*.o $<
+ifeq ($(COMPILER),gcc)
+	$(FC) $(gccopts) -c -o $*.o $<
+else ($(COMPILER),nv)
+	$(FC) $(nvopts) -c -o $*.o $<
+else
+	$(FC) ${FCOPTS} -c -o $*.o $<
+endif
 
 mod_blas.o: mod_blas.f90
-	$(FC) $(F90_INC) $(F90_OPTS) main.f90 -o magmatest-gcc.x
+ifeq ($(COMPILER),gcc)
+	$(FC) $(INC) $(gccopts) -c -o $*.o $<
+else ($(COMPILER),nv)
+	$(FC) $(INC) $(nvopts) -c -o $*.o $<
+else
+	$(FC) $(INC) ${FCOPTS} -c -o $*.o $<
+endif
 
-gcc: modules
-	export FC=mpif90; export F90_OPTS=$(gccopts)
-	$(FC) $(F90_OPTS) main.f90 -o magmatest-gcc.x
 
-nvhpc: modules
-	export FC=mpif90; export F90_OPTS=$(nvopts)
-	$(FC) $(F90_OPTS) main.f90 -o magmatest-nv.x
+main: $(modules)
+ifeq ($(COMPILER),gcc)
+	$(FC) $(F90_OPTS) main.f90 $(LINK) -o magmatest-gcc.x
+else ($(COMPILER),nv)
+	$(FC) $(F90_OPTS) main.f90 $(LINK) -o magmatest-nv.x
+endif
 
 clean:
-	-rm *.o *.mod *.x
+	-rm *.o *.mod
+
+distclean: clean
+	-rm *.x
+
