@@ -18,6 +18,10 @@ PROGRAM compiler_ifdefs
 #endif /* __NVCOMPILER */
 #endif /* __PGI */
 
+#ifdef __IBMC__
+  CHARACTER(LEN=*), PARAMETER :: compiler = 'IBM XL Fortran'
+#endif /* __IBMC__ */
+
 #ifdef __FLANG
   CHARACTER(LEN=*), PARAMETER :: compiler = 'LLVM Flang'
 #endif /* __FLANG */
