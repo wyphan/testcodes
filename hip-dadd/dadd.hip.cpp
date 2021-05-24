@@ -1,0 +1,104 @@
+#include <iostream>
+#include "hip/hip_runtime.h"
+
+using namespace std;
+
+// Helper function for error checking
+#define HIP_CHECK(command) {                                  \
+  hipError_t status = command;                                \
+  if( status != hipSuccess ) {                                \
+  cerr << "HIP Error: " << hipGetErrorString(status) << endl; \
+  abort();                                                    \
+  }                                                           \
+}
+
+// Kernel to add two vectors
+__global__ void dadd( int N,
+                      const double* d_vecA,
+                      const double* d_vecB,
+                      double* d_vecC ) {
+
+  // Use 1-D grid and block
+  int tid = blockIdx.x * blockDim.x + threadIdx.x;
+
+  if ( tid < N )
+    d_vecC[tid] = d_vecA[tid] + d_vecB[tid];
+
+  return;
+
+}
+
+// Main function
+int main( int argc, char* argv[] ) {
+
+  // Set HIP device to device 0
+  HIP_CHECK( hipSetDevice( 0 ) );
+
+  // Read N from stdin, then echo it to stdout
+  int N;
+  cin >> N;
+  cout << "N = " << N << endl;
+
+    // Allocate vectors on host
+  size_t sz_vec = N * sizeof(double);
+  double* h_A = (double*)malloc( sz_vec );
+  double* h_B = (double*)malloc( sz_vec );
+  double* h_C = (double*)malloc( sz_vec );
+
+  // Initialize vectors on host
+  for( int i = 0; i < N; i++ ) {
+    h_A[i] = 1.0;
+    h_B[i] = 2.0;
+  }
+  double chk = 3.0;
+
+  // Allocate vectors on device
+  double* d_A = NULL;
+  double* d_B = NULL;
+  double* d_C = NULL;
+  HIP_CHECK( hipMalloc( &d_A, sz_vec ) );
+  HIP_CHECK( hipMalloc( &d_B, sz_vec ) );
+  HIP_CHECK( hipMalloc( &d_C, sz_vec ) );
+
+  // Transfer data to device (synchronous blocking mode)
+  // Note: hipMemcpy( dest, src, sz, direction )
+  HIP_CHECK( hipMemcpy( d_A, h_A, sz_vec, hipMemcpyHostToDevice ) );
+  HIP_CHECK( hipMemcpy( d_B, h_B, sz_vec, hipMemcpyHostToDevice ) );
+
+  // Zero d_C using hipMemset()
+  HIP_CHECK( hipMemset( d_C, 0, sz_vec ) );
+
+  // Set up thread block and grid
+  int nb = 256;
+  dim3 grid  = ( (N+nb-1)/nb, 1, 1 ); // 1-D grid
+  dim3 block = ( nb, 1, 1 );          // 1-D block
+
+  // Call kernel using triple chevron syntax
+  // Note: Arguments are <<< grid, block, LDS_bytes, stream >>>
+  //       For ROCm < 3.6, use hipLaunchKernelGGL()
+  dadd<<< grid, block, 0, 0 >>>( N, d_A, d_B, d_C );
+
+  // Transfer data to host (synchronous blocking mode)
+  HIP_CHECK( hipMemcpy( h_C, d_C, sz_vec, hipMemcpyDeviceToHost ) );
+
+  // Check results
+  int nerr = 0;
+  for( int i = 0; i < N; i++ ) {
+    if( h_C[i] != chk ) {
+      nerr += 1;
+      cerr << "Error: C[" << i << "] = " << h_C[i] << endl;
+    }
+  }
+  if( nerr > 0 )
+    cerr << "Total " << nerr << " errors." << endl;
+
+  // Clean up
+  HIP_CHECK( hipFree( d_A ) );
+  HIP_CHECK( hipFree( d_B ) );
+  HIP_CHECK( hipFree( d_C ) );
+  free( h_A );
+  free( h_B );
+  free( h_C );
+  
+  return nerr;
+}
