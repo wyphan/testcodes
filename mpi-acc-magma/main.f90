@@ -9,6 +9,11 @@ PROGRAM mpi_acc_magma
   ! Input variable
   INTEGER :: N
 
+  ! argc, argv (Fortran 2003)
+  INTRINSIC :: COMMAND_ARGUMENT_COUNT, GET_COMMAND_ARGUMENT
+  INTEGER :: argc
+  CHARACTER(LEN=8) :: argv ! We only need one
+
   ! MPI variables
   INTEGER :: ierr, myid, nranks
   INTEGER, PARAMETER :: root = 0
@@ -40,10 +45,29 @@ PROGRAM mpi_acc_magma
   CALL magma_set_device( devnum )
   CALL magma_queue_create( devnum, queue )
 
-  ! Read N from stdin
-  IF( myid == root ) THEN
-     READ(*,*) N
-     WRITE(*,*) 'Using N = ', N
+  ! Check argc
+  IF( COMMAND_ARGUMENT_COUNT() > 0 ) THEN
+
+     ! Read N from argv[1]
+     IF( myid == root ) THEN
+        CALL GET_COMMAND_ARGUMENT( 1, VALUE=argv )
+        READ( argv, *, IOSTAT=ierr ) N
+        IF( ierr /= 0 ) THEN
+           WRITE(*,*) 'Error: cannot parse N from first argument ', argv
+           CALL MPI_Abort( MPI_COMM_WORLD, 1, ierr )
+           STOP
+        END IF ! ierr
+        WRITE(*,*) 'Using N = ', N
+     END IF ! root
+
+  ELSE
+
+     ! Read N from stdin
+     IF( myid == root ) THEN
+        READ(*,*) N
+        WRITE(*,*) 'Using N = ', N
+     END IF
+
   END IF
 
   ! Broadcast array dimension
