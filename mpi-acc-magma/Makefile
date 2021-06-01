@@ -6,10 +6,12 @@
 gccopts  = -cpp -g2 -Ofast -fopenacc -foffload=amdgcn-amdhsa="-march=gfx900"
 
 # PGI
-pgiopts  = -Mpreprocess -gopt -fast -acc -ta=tesla:managed -Minfo=accel -traceback
+#pgiopts  = -Mpreprocess -gopt -fast -acc -ta=tesla:managed -Minfo=accel -traceback
+pgiopts  = -Mpreprocess -gopt -fast -acc -ta=tesla -Minfo=accel -traceback
 
 # NVHPC
-nvopts   = -Mpreprocess -gopt -fast -acc=gpu -gpu=managed -Minfo=accel -traceback
+#nvopts   = -Mpreprocess -gopt -fast -acc=gpu -gpu=managed -Minfo=accel -traceback
+nvopts   = -Mpreprocess -gopt -fast -acc=gpu -gpu -Minfo=accel -traceback
 
 #==============================================================================
 # Libraries
