@@ -1,0 +1,80 @@
+MODULE cuf_kernels
+
+  USE mod_prec
+  IMPLICIT NONE
+
+CONTAINS
+
+!===============================================================================
+! CUDA Fortran kernel to initialize d_A and d_B vectors
+
+  ATTRIBUTES(global) SUBROUTINE initVecs( N, d_A, d_B )
+
+    ! Input argument
+    INTEGER, VALUE :: N
+
+    ! Output arguments
+    REAL(KIND=dd), DIMENSION(*) :: d_A, d_B
+
+    ! Internal variables
+    INTEGER, DEVICE :: tid
+
+    ! Use 1-D grid and block
+    tid = ( blockidx%x - 1 )*blockdim%x + threadidx%x
+
+    ! Perform initialization
+    IF( tid <= N ) THEN
+       d_A(tid) = REAL( tid,   KIND=dd )
+       d_B(tid) = REAL( 2*tid, KIND=dd )
+    END IF
+
+    RETURN
+  END SUBROUTINE initVecs
+
+!===============================================================================
+! CUDA Fortran kernel to perform dot product, translated from the CUDA C++
+! example posted in the slides for OLCF CUDA series training #5
+! "Atomics, Reductions, Warp Shuffle"
+
+  ATTRIBUTES(global) SUBROUTINE ddot( N, d_A, d_B, d_res )
+
+    ! Input arguments
+    INTEGER, VALUE :: N
+    REAL(KIND=dd), DIMENSION(*) :: d_A, d_B
+
+    ! Output argument
+    REAL(KIND=dd), VALUE :: d_res
+
+    ! Internal variables
+    INTEGER :: tid, gid, i
+    REAL(KIND=dd), SHARED, DIMENSION(blockdim%x) :: s_prod
+
+    ! Use 1-D grid and block
+    tid = threadidx%x
+    gid = ( blockidx%x - 1 )*blockdim%x + tid
+
+    ! Initialize variables using grid-stride loop
+    IF( gid == 0 ) d_res = 0._dd
+    DO WHILE( gid <= N )
+       s_prod(tid) = d_A(gid) * d_B(gid)
+       gid = gid + griddim%x * blockdim%x
+    END DO
+
+    ! Accumulate within threadblock (parallel sweep reduction)
+    i = blockdim%x / 2
+    DO WHILE( i > 0 )
+       CALL syncthreads()
+       IF( tid <= i ) s_prod(tid) = s_prod(tid) + s_prod(tid+i)
+       i = ISHFT( i, -1 )
+    END DO
+
+    ! Accumulate over blocks using atomics
+    ! Note: i is not used anymore
+    IF( tid == 0 ) i = atomicadd( d_res, s_prod(0) )
+
+    RETURN
+  END SUBROUTINE ddot
+
+!===============================================================================
+
+END MODULE cuf_kernels
