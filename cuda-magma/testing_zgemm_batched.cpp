@@ -154,7 +154,7 @@ int main( int argc, char** argv)
 	    double b = 36.87;
 	    double g = 0.;
 	    for( int s = 0; s < batchCount; s++ ) {
-	      wigner_d_matrix_acc( false, jmax, a, b, g, (std::complex<double>**)&d_A[s*lda*An] );
+	      wigner_d_matrix_acc( false, jmax, a, b, g, ldda, (std::complex<double>*)&d_A[s*lda*An] );
 	    }
 	    TESTING_CHECK( cudaMemcpy( h_A, d_A, sizeA*sizeof(magmaDoubleComplex), cudaMemcpyDeviceToHost ));
 

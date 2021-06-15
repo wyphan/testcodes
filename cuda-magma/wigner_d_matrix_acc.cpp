@@ -3,6 +3,8 @@
 #include <iostream>
 #include <limits>
 
+#define matD(i,j) matD[(i)*ldd+j]
+
 ////////////////////////////////////////////////////////////////////////////////
 // Generates the Wigner rotation matrix D(R) using the z-y-z convention,
 // where alpha, beta, gamma are the three Euler angles, respectively.
@@ -55,7 +57,8 @@ int wigner_d_matrix_acc( const bool half,
 			 const double alpha,
 			 const double beta,
 			 const double gamma,
-			 std::complex<double>** matD )
+			 const int ldd,
+			 std::complex<double>* matD )
 {
 
   // Numerical constants
@@ -168,7 +171,7 @@ int wigner_d_matrix_acc( const bool half,
 	      //  (j)
 	      // d    = P ( cos beta )
 	      //  0,0    j
-	      matD[posy][posx] = std::complex<double>( pn[j] );
+	      matD(posy,posx) = std::complex<double>( pn[j] );
 
 	    } else {
 
@@ -263,22 +266,22 @@ int wigner_d_matrix_acc( const bool half,
 	      } // j >= 18
 
 	      // Fill in matrix element D_(m',m)
-	      matD[posy][posx] = val;
+	      matD(posy,posx) = val;
 
 	      // Use identity to fill in rest of matrix
 
 	      // D_(-m,-m')
 	      if( m != -mp )
-		matD[posx-2*m][posy-2*mp] = val;
+		matD(posx-2*m,posy-2*mp) = val;
 
 	      // Minus sign
 	      if( (mp-m)%2 != 0 ) val *= -1.;
 	      // D_(m,m')
 	      if( m != mp )
-		matD[posx][posy] = val;
+		matD(posx,posy) = val;
 	      // D_(-m',-m)
 	      if( m != mp && m != -mp )
-		matD[posy-2*mp][posx-2*mp] = val;
+		matD(posy-2*mp,posx-2*mp) = val;
 
 	    } // m == m' == 0
 

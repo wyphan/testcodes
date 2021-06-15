@@ -6,6 +6,7 @@ int wigner_d_matrix_acc( const bool half,
 			 const double alpha,
 			 const double beta,
 			 const double gamma,
-			 std::complex<double>** matD );
+			 const int ldd,
+			 std::complex<double>* matD );
 
 #endif /* WIGNER_D_MATRIX_ACC_HPP */
