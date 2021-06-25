@@ -14,7 +14,7 @@ PROGRAM accomp
   INTEGER :: nthreads, tid
 
   ! Vector dimension
-  INTEGER, PARAMETER :: N = 2**20
+  INTEGER, PARAMETER :: N = 2**10
 
   ! Device variables
   REAL, ALLOCATABLE :: matA(:,:), vecAsum(:)
