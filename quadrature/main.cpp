@@ -5,6 +5,7 @@
 #include <omp.h>
 #endif /* NTHREADS */
 
+#include "quad_trapezoid.hpp"
 #include "quad_simpson.hpp"
 
 // Global variables
@@ -16,21 +17,21 @@ double y ( double x ) {
   return sin( x * deg2rad );
 }
 
-int main ( int argc, *char argc[] ) {
+int main ( int argc, char *argv[] ) {
 
   double xmin = 0;
   double xmax = pi/2.0;
   double n = 11;
 
-  QuadSimpson integrator;
+  QuadTrapezoid integrator;
   double res;
 
   std::cout << "Integrating y = sin(x) from x = " << xmin << " to " << xmax
             << " using " << integrator.quad_name << " with " << n << " points";
 
-  res = integrator.integrate( &y, xmin, xmax, n );
+  res = integrator.integrate( y, xmin, xmax, n );
 
-  std::cout << "Result = " << res
+  std::cout << "Result = " << res << std::endl;
 
   return 0;
 }

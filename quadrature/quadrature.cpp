@@ -3,14 +3,11 @@
 
 #include "quadrature.hpp"
 
-// Default constructor
-Quadrature::Quadrature () {
-
-  // Initialize quadrature coefficients
-  int n = 2;
-  init_coeffs(n);
-
-}
+// Constructor
+Quadrature::Quadrature ( int iMinPoints, std::string name ) :
+  quad_name(name),
+  minPoints(iMinPoints)
+{}
 
 // Default destructor
 Quadrature::~Quadrature () {
@@ -21,12 +18,13 @@ Quadrature::~Quadrature () {
 }
 
 // Perform numerical integration with bounds and number of points
-double Quadrature::integrate ( double& fn(double),
+double Quadrature::integrate ( func fn,
                                double start, double end, int n ) {
 
-  // Quick exit if n < 2
-  if (n < 2) {
-    std::cerr << "Error[integrate]: cannot integrate with fewer than 2 points"
+  // Quick exit if n < minPoints
+  if (n < minPoints) {
+    std::cerr << "Error[integrate]: cannot integrate with fewer than "
+              << minPoints << " points"
               << std::endl;
     return 0.0;
   }
@@ -56,13 +54,14 @@ double Quadrature::integrate ( double& fn(double),
 
 
 // Perform numerical integration with vector of points
-double Quadrature::integrate ( double& fn(double),
+double Quadrature::integrate ( func fn,
                                std::vector<double> x ) {
 
   // Quick exit if n < 2
   int n = x.size();
-  if (n < 2) {
-    std::cerr << "Error[integrate]: cannot integrate with fewer than 2 points"
+  if (n < minPoints) {
+    std::cerr << "Error[integrate]: cannot integrate with fewer than "
+              << minPoints << " points"
               << std::endl;
     return 0.0;
   }

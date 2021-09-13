@@ -4,27 +4,34 @@
 #include <vector>
 #include <string>
 
+// Define function pointer as a typedef
+typedef double (*func) ( double );
+// typedef double (*pfunc) ( double, struct param );
+
 // Class for integral quadratures
 class Quadrature {
 
 public:
 
-  // Constructor
-  Quadrature ();
+  // Constructor with minimum number of points and name of quadrature
+  Quadrature ( int iMinPoints, std::string name );
 
-  // Destructor
+  // Default destructor
   ~Quadrature ();
 
   // Name of quadrature method
-  std::string quad_name;
+  const std::string quad_name;
 
   // Function to perform numerical integration with bounds and number of points
-  double integrate ( double& fn(double), double start, double end, int n );
+  double integrate ( func fn, double start, double end, int n );
 
   // Function to perform numerical integration with vector of points
-  double integrate ( double& fn(double), std::vector<double> x );
+  double integrate ( func fn, std::vector<double> x );
 
-private:
+protected:
+
+  // Minimum number of points
+  const int minPoints;
 
   // Vector to hold quadrature coefficients
   std::vector<double> coeffs;
