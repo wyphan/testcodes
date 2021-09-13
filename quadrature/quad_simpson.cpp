@@ -18,10 +18,14 @@ void QuadSimpson::init_coeffs ( int n ) {
   coeffs[0] = coeffs[r-1] = 1.0/3.0;
 
   // Mid points
+#pragma omp parallel for
+  for (int i = 1; i < (r-1); i += 2) {
+      coeffs[i] = 4.0/3.0;
+  }
   if (r > minPoints) {
 #pragma omp parallel for
-    for (int i = 3; i < r-1; i += 2 ) {
-      coeffs[i] = 4.0/3.0;
+    for (int i = 2; i < (r-2); i += 2) {
+      coeffs[i] = 2.0/3.0;
     }
   }
 
