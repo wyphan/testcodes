@@ -27,7 +27,8 @@ int main ( int argc, char *argv[] ) {
   double res;
 
   std::cout << "Integrating y = sin(x) from x = " << xmin << " to " << xmax
-            << " using " << integrator.quad_name << " with " << n << " points";
+            << " using " << integrator.quad_name << " with " << n << " points"
+            << std::endl;
 
   res = integrator.integrate( y, xmin, xmax, n );
 

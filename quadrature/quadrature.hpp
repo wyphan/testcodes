@@ -36,8 +36,8 @@ protected:
   // Vector to hold quadrature coefficients
   std::vector<double> coeffs;
 
-  // Function to initialize quadrature coefficients
-  virtual void init_coeffs ( int n );
+  // Function to initialize quadrature coefficients (pure virtual function)
+  virtual void init_coeffs ( int n ) = 0;
 
 };
 
