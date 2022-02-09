@@ -4,8 +4,8 @@
 
 COMPILER = nv
 FC = nvfortran
-FCFLAGS = -stdpar -Minfo=acc
-LDFLAGS =
+FCFLAGS = -stdpar -Minfo=accel
+LDFLAGS = -stdpar
 
 ###############################################################################
 # Executable name
@@ -23,7 +23,7 @@ EXE = stdpar.$(COMPILER).x
 %.o: %.mod
 
 %.f90.o: %.f90
-	$(FC) $(FCOPTS) -c $< -o $*.o
+	$(FC) $(FCFLAGS) -c $< -o $*.o
 
 ###############################################################################
 # Phony targets
