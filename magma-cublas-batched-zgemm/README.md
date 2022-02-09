@@ -1,5 +1,4 @@
-CUDA-Magma
-==========
+# MAGMA/cuBLAS batched `ZGEMM` tester
 
 This code tests batched double-complex general matrix-matrix multiply (`ZGEMM`)
 interface from MAGMA. It contains a modified tester from MAGMA version 2.5.4.
