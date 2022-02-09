@@ -72,9 +72,6 @@ PROGRAM stdpar_dot_product
 
   CALL DATE_AND_TIME( values=t2 )
 
-  ! Fetch result from device
-  !$ACC UPDATE HOST( result )
-
   ! Check value ( using relative error ) and print result to standard output
   check = REAL( N, KIND=dp ) * REAL( N+1, KIND=dp ) * REAL( 2*N+1, KIND=dp) &
           / 3._dp
