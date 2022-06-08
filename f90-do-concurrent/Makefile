@@ -2,6 +2,7 @@
 # Compiler options
 ###############################################################################
 
+# NVIDIA nvfortran
 COMPILER = nv
 FC = nvfortran
 FCFLAGS = -stdpar -Minfo=accel
