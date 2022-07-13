@@ -1,0 +1,21 @@
+# Wil's list of GPU codes
+# Last updated: Jul 6, 2022
+#
+# AMD list taken from
+# - https://llvm.org/docs/AMDGPUUsage.html#processors
+# - https://www.coelacanth-dream.com/posts/2019/12/30/did-rid-product-matome-p2/
+#
+# arch : codename : model(s)
+#
+gfx900  : Vega10    : RX Vega / MI25 / MI25x2 / Pro V320 / Pro V340 / Pro Vega / Pro WX 8200 / Pro WX9100 / Pro SSG / Vega Frontier
+gfx904  : Vega12    : Pro Vega 16 / Pro Vega 20
+gfx906  : Vega20    : MI50 / MI60 / Pro VII / Pro Vega II / VII
+gfx908  : Arcturus  : MI100
+gfx90a  : Aldebaran : MI210 / MI250X
+gfx1010 : Navi10    : Pro 5700 / Pro 5700 XT / Pro W5700 / Pro W5700X / RX 5600 / RX 5600M / RX 5600 XT / RX 5700 / RX 5700M / RX 5700 XT / RX 5700 XT 50th / RX 5700B / RX 5700XTB
+gfx1011 : Navi12    : Pro 5600M / Pro V520
+gfx1012 : Navi14    : Pro W5500 / Pro W5500X / Pro 5500M / Pro 5500 XT / Pro 5300 / Pro 5300M / RX 5300 / RX 5300M / RX 5500 / RX 5500M / RX 5500 XT / RX 5500XTB
+gfx1030 : Navi21    : W6800 / RX 6800 / RX 6800 XT / RX 6900 XT / RX 6950 XT
+gfx1031 : Navi22    : RX 6700 XT / RX 6700M / RX 6750 XT / RX 6800M
+gfx1032 : Navi23    : W6000 / W6600M / RX 6800S / RX 6650 XT / RX 6700S / RX 6650M / RX 6650M XT
+gfx1034 : Navi24    : W6500M / W6400 / W6300M / RX 6300 / RX 6300M / RX 6500 XT / RX 6400 / RX 6500 / RX 6500M
