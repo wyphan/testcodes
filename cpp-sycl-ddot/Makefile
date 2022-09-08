@@ -3,7 +3,7 @@
 ###############################################################################
 
 CXX = dpcpp
-CXXFLAGS = -g -O2 -march=native -mtune=native -fsycl -fsycl-targets=spir64_gen
+CXXFLAGS = -g -O2 -march=native -mtune=native -fsycl -fsycl-targets=spir64
 LDFLAGS =
 
 ###############################################################################
