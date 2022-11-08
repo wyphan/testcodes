@@ -51,8 +51,7 @@ int main (int argc, char* argv[]) {
 
   // Perform dot product using SYCL lambda kernel and OneAPI built-in reduction
   q.submit( [&](sycl::handler& h) {
-    sycl::accessor res(bufres, h, sycl::read_write);
-    auto red = sycl::ext::oneapi::reduction(res, sycl::ext::oneapi::plus<>());
+    auto red = sycl::reduction(bufres, h, sycl::plus<>());
     h.parallel_for(sycl::range<1>(N), red, [=](sycl::id<1> i, auto &tmp) {
       double prod = vecA[i] * vecB[i];
       tmp += prod;
