@@ -36,7 +36,7 @@ int main (int argc, char* argv[]) {
 
   // Allocate result as shared memory and attach buffer
   double* result = sycl::malloc_shared<double>(1, q);
-  sycl::buffer bufres = sycl::buffer<double>(result, sycl::range<1>(1));
+  sycl::buffer bufres = sycl::buffer<double>(result, 1);
 
   // Initialize result to 0
   q.submit( [&](sycl::handler& h) {
@@ -49,11 +49,13 @@ int main (int argc, char* argv[]) {
   // Manual synchronization
   q.wait();
 
-  // Perform dot product using SYCL lambda kernel
+  // Perform dot product using SYCL lambda kernel and OneAPI built-in reduction
   q.submit( [&](sycl::handler& h) {
-    sycl::accessor res(bufres, h, sycl::write_only);
-    h.parallel_for(sycl::range<1>(N), [=](sycl::id<1> i) {
-      res[0] += vecA[i] * vecB[i];
+    sycl::accessor res(bufres, h, sycl::read_write);
+    auto red = sycl::ext::oneapi::reduction(res, sycl::ext::oneapi::plus<>());
+    h.parallel_for(sycl::range<1>(N), red, [=](sycl::id<1> i, auto &tmp) {
+      double prod = vecA[i] * vecB[i];
+      tmp += prod;
     });
   });
 
