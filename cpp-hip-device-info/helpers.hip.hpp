@@ -64,6 +64,7 @@ struct device_t {
   std::string arch;
   std::string codename;
   std::string hip_cc;
+  bool is_amd;
   bool is_multigpu;
   bool is_apu;
   int rev;
@@ -72,8 +73,8 @@ struct device_t {
   int cu_count;
   int cuclk;
   int instclk;
-  // int thr_per_cu;
-  // int reg_per_blk;
+  int thr_per_cu; // NVIDIA only
+  int reg_per_blk; // NVIDIA only
 
   // Compute params
   int warpsz;
@@ -85,7 +86,7 @@ struct device_t {
   int memclk; // kHz
   int bussz; // bits
   size_t global_memsz; // bytes
-  // size_t l2_memsz; // bytes
+  size_t l2_memsz; // bytes, NVIDIA only
   size_t shared_memsz; // bytes
   size_t shared_per_cu; // bytes
   size_t shared_per_blk; // bytes
@@ -131,6 +132,14 @@ int get_ngpus () {
   }
   return ngpus;
 }
+
+// Detect NVIDIA or AMD GPU at compile time, from:
+// https://stackoverflow.com/a/74358932/4103665
+#if defined(__HIP_PLATFORM_AMD__)
+bool is_amd_gpu () { return true; }
+#else
+bool is_amd_gpu () { return false; }
+#endif /* __HIP_PLATFORM_AMD__ */
 
 // Get GPU info, return -1 for select failure, -2 for query failure
 int get_gpu_info (const int id, device_t& gpu) {
@@ -281,6 +290,9 @@ int populate_gpu_fields (const int id, device_t& gpu,
   // Convert PCI bus ID to hex
   std::stringstream pcibus;
   pcibus << std::hex << gpu.prop.pciBusID;
+
+  // Detect whether GPU is AMD or NVIDIA
+  gpu.is_amd = ;
 
   // Fill in PCI location
   pcibus >> gpu.pci;
