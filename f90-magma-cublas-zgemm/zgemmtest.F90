@@ -58,7 +58,7 @@ PROGRAM zgemmtest
   ATTRIBUTES(managed) :: d_A, d_B, d_C
 #endif /* USE_MANAGED */
 
-#else
+#else /* CUDA managed memory disabled */
 
   ! Matrices
   COMPLEX(KIND=dc), DIMENSION(:,:), ALLOCATABLE :: A, B, C
@@ -76,34 +76,7 @@ PROGRAM zgemmtest
   INTEGER :: rate, t0, t1, t2
   REAL(KIND=dp) :: t01, t12, t01ave, t12ave
 
-#ifdef NO_STIME
-  ! Workaround for AOCC 2.1
-  EXTERNAL :: my_clock_gettime
-#else
   INTRINSIC :: SYSTEM_CLOCK
-#endif /* NO_STIME */
-
-#ifdef _OPENMP
-
-  ! Note: The whole code is encased in one big PARALLEL directive
-  !       PARAMETERS aren't affected by OpenMP directives, so no need to declare here
-  !$OMP PARALLEL PRIVATE(tid,i,j,idx,njobs,dummy,rate,t0,t1,t2) &
-  !$OMP          SHARED(nthreads,a,b,c,n,t01,t12,t01ave,t12ave)
-
-  tid = OMP_GET_THREAD_NUM()
-  nthreads = OMP_GET_NUM_THREADS()
-  !WRITE(*,*) 'Thread ', tid, ' started'
-
-#else
-
-  tid = 0
-  nthreads = 1
-
-#endif /* _OPENMP */
-
-  !$OMP MASTER
-
-  WRITE(*,*) 'Using ', nthreads, ' threads'
 
   ! Read matrix size from stdin and echo it to stdout
   WRITE(*,*) 'Input matrix size'
@@ -113,8 +86,6 @@ PROGRAM zgemmtest
   WRITE(*,*) 'Estimated memory usage:', &
              REAL( 3*n**2*C_SIZEOF(dummy), dp ) / REAL( kiB, dp )**2, &
              'MiB'
-
-  ! Allocate matrices
 
 #ifdef _OPENACC
 
@@ -126,16 +97,16 @@ PROGRAM zgemmtest
   ! Device arrays
   !$ACC ENTER DATA CREATE( d_a(1:n,1:n), d_b(1:n,1:n), d_c(1:n,1:n) )
 
-#else
+#else /* no OpenACC */
 
-  ! CPU arrays
+  ! Allocate CPU arrays
   ALLOCATE( A(n,n) )
   ALLOCATE( B(n,n) )
   ALLOCATE( C(n,n) )
 
 #ifdef USE_GPU
 
-  ! Device arrays
+  ! Allocate device arrays
   CALL cudaMalloc_f( d_A, n*n )
   CALL cudaMalloc_f( d_B, n*n )
   CALL cudaMalloc_f( d_C, n*n )
@@ -143,16 +114,31 @@ PROGRAM zgemmtest
 #endif /* USE_GPU */
 
 #endif /* _OPENACC */
+  
+#ifdef _OPENMP
 
+  ! Note: The main code is encased in one big PARALLEL directive
+  !       PARAMETERS aren't affected by OpenMP directives, so no need to declare here
+  !$OMP PARALLEL PRIVATE(tid,i,j,myidx,njobs,dummy,rate,t0,t1,t2) &
+  !$OMP          SHARED(nthreads,a,b,c,n,t01,t12,t01ave,t12ave)
+
+  !$OMP MASTER
+  WRITE(*,*) 'Using ', nthreads, ' threads'
   !$OMP END MASTER
-  !$OMP BARRIER
 
-#ifdef NO_STIME
-  CALL my_clock_gettime( t0 )
-#else
+  tid = OMP_GET_THREAD_NUM()
+  nthreads = OMP_GET_NUM_THREADS()
+  !WRITE(*,*) 'Thread ', tid, ' started'
+  
+#else /* serial version */
+
+  tid = 0
+  nthreads = 1
+
+#endif /* _OPENMP */
+
   ! Note: CPU_TIME is not threadsafe
   CALL SYSTEM_CLOCK( t0, COUNT_RATE=rate )
-#endif /* NO_STIME */
 
 #ifdef _OPENACC
 
@@ -175,8 +161,7 @@ PROGRAM zgemmtest
 
   !$OMP MASTER
 
-#else
-  ! Initialize matrices on CPU
+#else /* no OpenACC */
 
 #ifdef _OPENMP
 
@@ -194,7 +179,7 @@ PROGRAM zgemmtest
      myidx = tid*njobs ! Everybody does the same number of jobs
   END IF
 
-#else
+#else /* no OpenMP */
 
   ! Note: if OpenMP is disabled, the following defaults are set:
   njobs = n
@@ -202,7 +187,7 @@ PROGRAM zgemmtest
 
 #endif /* _OPENMP */
 
-  WRITE(*,*) 'Initialize matrices on CPU'
+  ! Initialize matrices on CPU
   !$OMP DO COLLAPSE(2)
   DO j = 0, njobs-1
      DO i = 1, n
@@ -211,6 +196,7 @@ PROGRAM zgemmtest
         C(i,myidx+j) = zzero
      END DO ! i
   END DO ! j
+  WRITE(*,*) 'Initialized matrices on CPU'
 
 #ifdef USE_GPU
 
@@ -225,11 +211,7 @@ PROGRAM zgemmtest
 
 #endif /* _OPENACC */
 
-#ifdef NO_STIME
-  CALL my_clock_gettime( t1 )
-#else
   CALL SYSTEM_CLOCK( t1 )
-#endif /* NO_STIME */
 
 #ifdef USE_GPU
 
@@ -265,7 +247,7 @@ PROGRAM zgemmtest
   ! Transfer data to CPU using OpenACC
   !$ACC UPDATE SELF( d_c )
 
-#else
+#else /* GPU enabled but no OpenACC */
 
   ! Transfer data to CPU using CUDA
   CALL cudaMemcpy_f( C, d_C, n*n, cudaMemcpyDeviceToHost )
@@ -274,14 +256,14 @@ PROGRAM zgemmtest
 
   !$OMP END MASTER
 
-#else
+#else /* GPU disabled */
 
 #ifdef _OPENMP
 
   ! Each thread performs matrix multiply on CPU for its own block of njobs
-  CALL ZGEMM( 'N', 'N', njobs, n, n, zone, a(idx,1), n, b, n, zzero, c(idx,1), n)
+  CALL ZGEMM( 'N', 'N', njobs, n, n, zone, a(myidx,1), n, b(1,1), n, zzero, c(myidx,1), n)
 
-#else
+#else /* serial version */
 
   ! Perform matrix multiply on 1 CPU
   CALL ZGEMM( 'N', 'N', n, n, n, zone, a, n, b, n, zzero, c, n)
@@ -290,17 +272,13 @@ PROGRAM zgemmtest
 
 #endif /* USE_GPU */
 
-#ifdef NO_STIME
-  CALL my_clock_gettime( t2 )
-#else
   CALL SYSTEM_CLOCK( t2 )
-#endif /* NO_STIME */
 
   ! Validate result
 #ifdef _OPENACC
   IF( INT(d_c(n,n)) /= 2*n ) THEN
      WRITE(*,*) 'Warning: incorrect result c_ij = ', INT(d_c(n,n)), &
-#else
+#else /* no OpenACC */
   IF( INT(c(n,n)) /= 2*n ) THEN
      WRITE(*,*) 'Warning: incorrect result c_ij = ', INT(c(n,n)), &
 #endif /* _OPENACC */
@@ -334,7 +312,7 @@ PROGRAM zgemmtest
   t12ave = t12ave / REAL( nthreads, KIND=dp )
   !$OMP END MASTER
 
-#else
+#else /* serial version */
 
   t01ave = REAL( t1-t0, KIND=dp ) / REAL( rate, KIND=dp )
   t12ave = REAL( t2-t1, KIND=dp ) / REAL( rate, KIND=dp )
@@ -348,6 +326,9 @@ PROGRAM zgemmtest
 
   ! Clean up
 
+  !$OMP END MASTER
+  !$OMP END PARALLEL
+
 #ifdef _OPENACC
 
   !$ACC EXIT DATA IF( acc_is_present(d_a) ) DELETE( d_a )
@@ -357,7 +338,11 @@ PROGRAM zgemmtest
   DEALLOCATE( d_b )
   DEALLOCATE( d_c )
 
-#else
+#else /* no OpenACC */
+
+  DEALLOCATE( A )
+  DEALLOCATE( B )
+  DEALLOCATE( C )
 
 #ifdef USE_GPU
 
@@ -367,14 +352,8 @@ PROGRAM zgemmtest
 
 #endif /* USE_GPU */
 
-  DEALLOCATE( a )
-  DEALLOCATE( b )
-  DEALLOCATE( c )
-
 #endif /* _OPENACC */
 
-  !$OMP END MASTER
-  !$OMP END PARALLEL
   STOP
 
 END PROGRAM zgemmtest

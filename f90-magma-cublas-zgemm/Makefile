@@ -15,8 +15,8 @@ pgfopts     = -gopt -fast -Mpreprocess -Minfo=ftn,opt,loop,lre,vect,par,acc -tra
 pgfaccopts  = -acc -ta=tesla:lineinfo -Mcuda
 pgfcudalink = -Mcudalib=cublas -cudalibs
 
-# LLVM
-flangopts = -DNO_STIME -g -Ofast -Mfreeform -Mpreprocess -mp
+# AMD AOCC
+flangopts = -g -Ofast -Mfreeform -Mpreprocess -mp
 clangopts = -g -Ofast -fopenmp
 flanglink = -mp
 
@@ -47,7 +47,7 @@ xlsmplink = -L$(xlsmpdir)/lib -lxlsmp
 #==============================================================================
 
 # BaseCamp (AOCC)
-aocldir  = /opt/AMD/aocl/aocl-linux-aocc-2.2.0
+aocldir  = /opt/AMD/aocl/aocl-linux-aocc-3.2.0
 aocllink = -L$(aocldir)/libs -lblis-mt
 
 #==============================================================================
@@ -142,15 +142,14 @@ nvmagma: nv
 	$(FC) $(pgfopts) $(pgfaccopts) $(magmainc) $(magmaopts) -c zgemmtest.F90 -o zgemmtest.o
 	$(FC) $(pgfopts) $(pgfaccopts) magma_iface.o zgemmtest.o -o zgemm-nv-magma.x $(magmalink) $(pgfcudalink)
 
-llvm:
+aocc:
 	export CC=clang; export FC=flang
 
-llvm-all: flangaocl
+aocc-all: flangaocl
 
 flangaocl:
-	$(CC) $(clangopts) -c clock_gettime.c -o clock_gettime.o
 	$(FC) $(flangopts) -c zgemmtest.F90 -o zgemmtest.o
-	$(FC) $(flanglink) zgemmtest.o clock_gettime.o -o zgemm-flang-aocl.x $(aocllink)
+	$(FC) $(flanglink) zgemmtest.o -o zgemm-flang-aocl.x $(aocllink)
 
 clean:
 	-rm *.o *.mod *.x
