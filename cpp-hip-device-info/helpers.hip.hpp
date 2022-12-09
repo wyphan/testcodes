@@ -292,7 +292,7 @@ int populate_gpu_fields (const int id, device_t& gpu,
   pcibus << std::hex << gpu.prop.pciBusID;
 
   // Detect whether GPU is AMD or NVIDIA
-  gpu.is_amd = ;
+  gpu.is_amd = is_amd_gpu();
 
   // Fill in PCI location
   pcibus >> gpu.pci;
