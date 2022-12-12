@@ -269,7 +269,7 @@ int identify_gpu (const std::string arch,
 
   // TODO: Match GPU based on lspci output
   //       For now, just emit the first one
-  gpuname_idx = 0;
+  // gpuname_idx = 0;
 
   if (! found) {
     std::cout << "GCN arch " << archname << " not found in database!" << std::endl;
@@ -308,11 +308,11 @@ int populate_gpu_fields (const int id, device_t& gpu,
   int gpuname_idx = -1;
   int ierr = identify_gpu(gpu.arch, family_idx, gpuname_idx, gputable);
   if (family_idx < 0) {    
-    gpu.codename = "Unknown";
+    gpu.codename = gpu.arch;
   } else {
     gpu.codename = gputable[family_idx].codename;
   } // family_idx
-  if (gpuname_idx < 0) {
+  if (family_idx < 0 || gpuname_idx < 0) {
     gpu.name = "Unknown";
   } else {
     gpu.name = gputable[family_idx].gpuname.elem[gpuname_idx];
