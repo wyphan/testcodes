@@ -9,7 +9,8 @@ int main (int argc, char* argv[]) {
   unsigned long N;
   // Check argc and read N from argv
   if (argc > 1) {
-    std::stringstream s;
+    std::string str = argv[1];
+    std::istringstream s(str);
     s >> N;
   } else {
     // Read N from standard input
@@ -23,7 +24,7 @@ int main (int argc, char* argv[]) {
 
   // Print GPU name
   std::cout << "Using device "
-            << q.get_device().get_info<sycl::info::device::name>()
+            << mygpu.get_info<sycl::info::device::name>()
             << std::endl;
 
   // Allocate vectors on GPU and attach buffers
