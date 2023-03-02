@@ -8,18 +8,18 @@ const double tol = 1.0e-10;
 
 int main (int argc, char* argv[]) {
 
-  long N;
+  unsigned long N;
   // Check argc and read N from argv
   if (argc > 1 && atol(argv[1]) > 0L) {
     N = atol(argv[1]);
   } else {
     // Read N from standard input
     printf("Input vector length N:\n");
-    scanf("%ul", &N);
+    scanf("%lu", &N);
   } // argc, argv
 
   // Echo N to standard output
-  printf("Using N = %u\n", N);
+  printf("Using N = %lu\n", N);
 
   time_t t0 = time(NULL);
 
@@ -72,8 +72,8 @@ int main (int argc, char* argv[]) {
   #pragma omp target exit data map(delete: vecA, vecB, result )
 
   // Check value ( using relative error ) and print result to standard output
-  double check = (double)N * (double)(N+1) * (double)(2*N + 1) / 3.0;
-  if ( abs( result/check - 1.0 ) > tol ) {
+  double check = (double)(N) * (double)(N - 1) * (double)(2*N - 1) / 3.0;
+  if ( fabs( result/check - 1.0 ) > tol ) {
     printf("Error! Result = %e when it should be %e\n", result, check);
   } else {
     printf("Success! Result = %e\n", result);
