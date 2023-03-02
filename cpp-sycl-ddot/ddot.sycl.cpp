@@ -1,16 +1,24 @@
 #include <iostream>
+#include <sstream>
+#include <cmath>
 
 #include <CL/sycl.hpp>
 
 int main (int argc, char* argv[]) {
 
-  // Read vector dimension N from stdin, then echo it to stdout
-  int N;
-  std::cin >> N;
-  std::cout << "Using N = " << N << std::endl;
+  unsigned long N;
+  // Check argc and read N from argv
+  if (argc > 1) {
+    std::stringstream s;
+    s >> N;
+  } else {
+    // Read N from standard input
+    std::cin >> N;
+    std::cout << "Using N = " << N << std::endl;
+  } // argc, argv
 
   // Select GPU device and create queue
-  sycl::gpu_selector mygpu;
+  sycl::gpu_selector_v mygpu;
   sycl::queue q(mygpu);
 
   // Print GPU name
@@ -64,8 +72,8 @@ int main (int argc, char* argv[]) {
 
   // Check value (using relative error) and print to stdout
   double tol = 1.0e-10;
-  double check = (double)N * (double)(N + 1) * (double)(2*N + 1) / 3.0;
-  if (std::abs(res[0]/check) - 1 > tol) {
+  double check = (double)N * (double)(N - 1) * (double)(2*N - 1) / 3.0;
+  if (std::fabs(res[0]/check - 1.0) > tol) {
     std::cout << "Error! Result = " << res[0]
               << " when it should be " << check << std::endl;
   } else {
