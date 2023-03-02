@@ -18,7 +18,7 @@ int main (int argc, char* argv[]) {
   } // argc, argv
 
   // Select GPU device and create queue
-  sycl::gpu_selector_v mygpu;
+  sycl::device mygpu { sycl::gpu_selector_v };
   sycl::queue q(mygpu);
 
   // Print GPU name
