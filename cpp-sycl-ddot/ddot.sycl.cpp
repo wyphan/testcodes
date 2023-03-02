@@ -27,6 +27,17 @@ int main (int argc, char* argv[]) {
             << mygpu.get_info<sycl::info::device::name>()
             << std::endl;
 
+  // Calculate whether vectors will fit in device memory
+  double mem_gib = (double)mygpu.get_info<sycl::info::device::global_mem_size>() / (double)(1ULL<<30);
+  double sz_gib = (double)(2 * N * sizeof(double)) / (double)(1ULL<<30);
+  if (sz_gib > mem_gib) {
+    std::cout << "Error: Using vector size " << N
+	      << " requires " << sz_gib << " GiB of device memory;"
+	      << " this device only has " << mem_gib << " GiB."
+	      << std::endl;
+    return 1;
+  }
+
   // Allocate vectors on GPU and attach buffers
   double* vecA = sycl::malloc_device<double>(N, q);
   double* vecB = sycl::malloc_device<double>(N, q);
