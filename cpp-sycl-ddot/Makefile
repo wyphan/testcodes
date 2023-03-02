@@ -2,9 +2,9 @@
 # Compiler options
 ###############################################################################
 
-CXX = dpcpp
+CXX = icpx
 CXXFLAGS = -g -O2 -march=native -mtune=native -fsycl -fsycl-targets=spir64
-LDFLAGS =
+LDFLAGS = -fsycl
 
 ###############################################################################
 # Executable name
