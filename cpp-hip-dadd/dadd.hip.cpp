@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include "hip/hip_runtime.h"
 
 using namespace std;
@@ -13,7 +14,7 @@ using namespace std;
 }
 
 // Kernel to add two vectors
-__global__ void dadd( const int N,
+__global__ void dadd( const unsigned long N,
                       const double* d_vecA,
                       const double* d_vecB,
                       double* d_vecC ) {
@@ -36,19 +37,26 @@ int main( int argc, char* argv[] ) {
   // Set HIP device to device 0
   HIP_CHECK( hipSetDevice( 0 ) );
 
-  // Read N from stdin, then echo it to stdout
-  int N;
-  cin >> N;
-  cout << "N = " << N << endl;
+  unsigned long N;
+  // Check argc and read N from argv
+  if (argc > 1) {
+    std::string str = argv[1];
+    std::istringstream s(str);
+    s >> N;
+  } else {
+    // Read N from standard input
+    std::cin >> N;
+    std::cout << "Using N = " << N << std::endl;
+  } // argc, argv
 
-    // Allocate vectors on host
+  // Allocate vectors on host
   size_t sz_vec = N * sizeof(double);
   double* h_A = (double*)malloc( sz_vec );
   double* h_B = (double*)malloc( sz_vec );
   double* h_C = (double*)malloc( sz_vec );
 
   // Initialize vectors on host
-  for( int i = 0; i < N; i++ ) {
+  for( unsigned long i = 0; i < N; i++ ) {
     h_A[i] = 1.0;
     h_B[i] = 2.0;
   }
@@ -90,7 +98,7 @@ int main( int argc, char* argv[] ) {
 
   // Check results
   int nerr = 0;
-  for( int i = 0; i < N; i++ ) {
+  for( unsigned long i = 0; i < N; i++ ) {
     if( h_C[i] != chk ) {
       nerr += 1;
       cerr << "Error: C[" << i << "] = " << h_C[i] << endl;
