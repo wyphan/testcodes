@@ -1,6 +1,6 @@
 #include <iostream>
 #include <sstream>
-#include "hip/hip_runtime.h"
+#include <hip/hip_runtime.h>
 
 using namespace std;
 
