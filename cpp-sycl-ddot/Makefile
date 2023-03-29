@@ -2,9 +2,15 @@
 # Compiler options
 ###############################################################################
 
+# Intel
 CXX = icpx
 CXXFLAGS = -g -O2 -march=native -mtune=native -fsycl -fsycl-targets=spir64
 LDFLAGS = -fsycl
+
+# hipSYCL/Open SYCL
+#CXX = syclcc
+#CXXFLAGS = -g -O2 --hipsycl-platform=rocm --hipsycl-gpu-arch=gfx900
+#LDFLAGS =
 
 ###############################################################################
 # Executable name
