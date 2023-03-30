@@ -42,7 +42,7 @@ int main (int argc, char* argv[]) {
   // Initialize result variable
   #pragma omp target
   {
-    double result = 0.0;
+    result = 0.0;
   }
 
   // Note: No barrier needed here because omp target is synchronous
