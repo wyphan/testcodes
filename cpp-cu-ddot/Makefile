@@ -14,11 +14,12 @@ distclean: clean
 ###############################################################################
 # Detect ROCm installation
 ###############################################################################
-ifeq (or("${CUDA_HOME}","${NVHPC_CUDA_HOME}"),"")
-$(error Please load a CUDA module or export CUDA_HOME to the appropriate path)
-endif
+ifeq ("${CUDA_HOME}","")
 ifneq ("${NVHPC_CUDA_HOME}","")
 CUDA_HOME := ${NVHPC_CUDA_HOME}
+else
+$(error Please load a CUDA module or export CUDA_HOME to the appropriate path)
+endif
 endif
 
 ###############################################################################
