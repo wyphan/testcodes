@@ -138,7 +138,7 @@ int main( int argc, char* argv[] ) {
     int gridsz = NBLOCKS(extent, threadsPerBlock);
     grid  = dim3( gridsz, 1, 1 );          // 1-D grid
     block = dim3( threadsPerBlock, 1, 1 ); // 1-D block
-    cout << "Kernel 2 (reduceblocks), workspace size = " << worksz << ", filled = " << worksz << endl;
+    cout << "Kernel 2 (reduceblocks), workspace size = " << extent << ", filled = " << worksz << endl;
     cout << "Using grid: " << grid.x << ", " << grid.y << ", " << grid.z << endl;
     cout << "Using block: " << block.x << ", " << block.y << ", " << block.z << endl;
 
