@@ -8,6 +8,9 @@
 
 using namespace std;
 
+// Global variables
+const int threadsPerBlock = 256;
+
 // Helper function for error checking
 #define HIP_CHECK(command) {                                    \
   hipError_t status = command;                                  \
@@ -106,9 +109,8 @@ int main( int argc, char* argv[] ) {
   ROCTX_CHECK( roctxRangePop() ); // init
 
   // Set up thread block and grid
-  int nb = 256;
-  dim3 grid  = dim3( (N+nb-1)/nb, 1, 1 ); // 1-D grid
-  dim3 block = dim3( nb, 1, 1 );          // 1-D block
+  dim3 grid  = dim3( (N + threadsPerBlock - 1) / threadsPerBlock, 1, 1 ); // 1-D grid
+  dim3 block = dim3( threadsPerBlock, 1, 1 );                             // 1-D block
   cout << "Using grid: " << grid.x << ", " << grid.y << ", " << grid.z << endl;
   cout << "Using block: " << block.x << ", " << block.y << ", " << block.z << endl;
 
