@@ -2,7 +2,7 @@
 # Recipes that don't depend on ROCm availability
 ###############################################################################
 
-build: dadd.x
+build: checkrocm dadd.x
 
 clean:
 	-rm -rf *.x
@@ -14,8 +14,9 @@ distclean: clean
 ###############################################################################
 # Detect ROCm installation
 ###############################################################################
+checkrocm:
 ifeq ("${ROCM_PATH}","")
-$(error Please load a ROCm module or export ROCM_PATH to the appropriate path)
+	$(error Please load a ROCm module or export ROCM_PATH to the appropriate path)
 endif
 
 ###############################################################################
