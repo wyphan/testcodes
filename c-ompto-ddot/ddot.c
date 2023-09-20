@@ -28,8 +28,8 @@ int main (int argc, char* argv[]) {
   double* vecB = (double*)malloc( (size_t)N * sizeof(double) );
 
   // Allocate vectors and result variables on device (GPU)
-  double result;
-  #pragma omp target enter data map(to:N) map(alloc: vecA[0:N-1], vecB[0:N-1], result)
+  double result = 0.0;
+  #pragma omp target enter data map(to:N) map(alloc: vecA[0:N-1], vecB[0:N-1]) map(to:result)
 
   // Initialize vectors on device
   // Note: the order of the clauses matter!
@@ -40,7 +40,7 @@ int main (int argc, char* argv[]) {
   }
 
   // Initialize result variable
-#pragma omp target
+  #pragma omp target
   {
     result = 0.0;
   }
@@ -56,13 +56,10 @@ int main (int argc, char* argv[]) {
     result += vecA[i] * vecB[i];
   }
 
-  // Fetch result
-  #pragma omp target update to(result)
-
   time_t t2 = time(NULL);
 
-  // Close off data region
-  #pragma omp target exit data map(delete: N, vecA, vecB, result)
+  // Fetch result and close off data region
+  #pragma omp target exit data map(delete: N, vecA, vecB) map(from:result)
 
   // Check value ( using relative error ) and print result to standard output
   double check = (double)(N) * (double)(N - 1) * (double)(2*N - 1) / 3.0;
