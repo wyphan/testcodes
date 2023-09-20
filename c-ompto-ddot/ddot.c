@@ -29,18 +29,18 @@ int main (int argc, char* argv[]) {
 
   // Allocate vectors and result variables on device (GPU)
   double result;
-  #pragma omp target enter data map(alloc: vecA[N], vecB[N], result )
+  #pragma omp target enter data map(to:N) map(alloc: vecA[0:N-1], vecB[0:N-1], result)
 
   // Initialize vectors on device
   // Note: the order of the clauses matter!
-  #pragma omp target teams distribute parallel for
+  #pragma omp target teams distribute parallel for shared(vecA, vecB)
   for (unsigned long i = 0; i < N; i++) {
     vecA[i] = (double)i;
     vecB[i] = (double)(2*i);
   }
 
   // Initialize result variable
-  #pragma omp target
+#pragma omp target
   {
     result = 0.0;
   }
@@ -51,25 +51,18 @@ int main (int argc, char* argv[]) {
   time_t t1 = time(NULL);
 
   // Perform dot product on device
-  #pragma omp target teams distribute parallel for reduction(+:result)
+  #pragma omp target teams distribute parallel for shared(vecA, vecB) reduction(+:result)
   for (unsigned long i = 0; i < N; i++) {
     result += vecA[i] * vecB[i];
   }
 
-#if 0
-  #pragma omp target
-  {
-    double result = 42.0;
-  }
-#endif /* DEBUG */
-
   // Fetch result
-  #pragma omp target update from( result )
+  #pragma omp target update to(result)
 
   time_t t2 = time(NULL);
 
-  // Fetch result from device and close off data region
-  #pragma omp target exit data map(delete: vecA, vecB, result )
+  // Close off data region
+  #pragma omp target exit data map(delete: N, vecA, vecB, result)
 
   // Check value ( using relative error ) and print result to standard output
   double check = (double)(N) * (double)(N - 1) * (double)(2*N - 1) / 3.0;
