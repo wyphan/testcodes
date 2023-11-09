@@ -46,7 +46,6 @@ int main (int argc, char* argv[]) {
   // Dump platform vendors and names, then find which platforms has GPUs
   cl_platform_id* cl_plats = (cl_platform_id*) malloc( nplats * sizeof(cl_platform_id) );
   CL_CHECK( clGetPlatformIDs(nplats, cl_plats, NULL) );
-
   for (cl_uint p = 0; p < nplats; p++) {
 
     char plat_ven[128];   size_t sz_ven = 128 * sizeof(char);
@@ -54,7 +53,7 @@ int main (int argc, char* argv[]) {
     size_t len_ven, len_name;
     CL_CHECK( clGetPlatformInfo(cl_plats[p], CL_PLATFORM_VENDOR, sz_ven, &plat_ven, NULL) );
     CL_CHECK( clGetPlatformInfo(cl_plats[p], CL_PLATFORM_NAME, sz_name, &plat_name, NULL) );
-    printf("%i. %s: %s\n", p, plat_ven, plat_name);
+    printf("%i. %s: %s\n", p+1, plat_ven, plat_name);
 
     cl_uint plat_ngpus = 0;
     devlist_t* prev_item = gpulist;
@@ -63,13 +62,15 @@ int main (int argc, char* argv[]) {
 
       plat_gpus[p].ngpus = plat_ngpus;
       plat_gpus[p].gpus = (cl_device_id*)malloc( plat_ngpus * sizeof(cl_device_id) );
-      for (cl_uint d = 0; d < plat_ngpus; p++) {
+      CL_CHECK( clGetDeviceIDs(cl_plats[p], CL_DEVICE_TYPE_GPU, plat_ngpus, plat_gpus[p].gpus, NULL) );
 
-	cl_device_id* this_gpu = (cl_device_id*)malloc( sizeof(cl_device_id) );
-	CL_CHECK( clGetDeviceIDs(cl_plats[p], CL_DEVICE_TYPE_GPU, plat_ngpus, this_gpu, NULL) );
+      for (cl_uint d = 0; d < plat_ngpus; d++) {
+
+	cl_device_id* this_gpu = &(plat_gpus[p].gpus[d]);
 
 	devlist_t* cur_item = (devlist_t*)malloc( sizeof(devlist_t) );
 	cur_item->next = NULL;
+
 	prev_item->next = cur_item;
 	prev_item->gpu = this_gpu;
 
