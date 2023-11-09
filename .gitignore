@@ -1,5 +1,8 @@
 # Temporary object files
-*.o
+**/*.o
 
 # Executables
-*.x
+**/*.x
+
+# HPCToolkit data
+**/hpctoolkit-*

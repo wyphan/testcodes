@@ -28,12 +28,12 @@ int main (int argc, char* argv[]) {
   double* vecB = (double*)malloc( (size_t)N * sizeof(double) );
 
   // Allocate vectors and result variables on device (GPU)
-  double result;
-  #pragma omp target enter data map(alloc: vecA[N], vecB[N], result )
+  double result = 0.0;
+  #pragma omp target enter data map(to:N, result) map(alloc: vecA[0:N-1], vecB[0:N-1])
 
   // Initialize vectors on device
   // Note: the order of the clauses matter!
-  #pragma omp target teams distribute parallel for
+  #pragma omp target teams distribute parallel for shared(vecA, vecB)
   for (unsigned long i = 0; i < N; i++) {
     vecA[i] = (double)i;
     vecB[i] = (double)(2*i);
@@ -51,25 +51,15 @@ int main (int argc, char* argv[]) {
   time_t t1 = time(NULL);
 
   // Perform dot product on device
-  #pragma omp target teams distribute parallel for reduction(+:result)
+  #pragma omp target teams distribute parallel for shared(vecA, vecB) reduction(+:result)
   for (unsigned long i = 0; i < N; i++) {
     result += vecA[i] * vecB[i];
   }
 
-#if 0
-  #pragma omp target
-  {
-    double result = 42.0;
-  }
-#endif /* DEBUG */
-
-  // Fetch result
-  #pragma omp target update from( result )
-
   time_t t2 = time(NULL);
 
-  // Fetch result from device and close off data region
-  #pragma omp target exit data map(delete: vecA, vecB, result )
+  // Close off data region
+  #pragma omp target exit data map(delete: vecA, vecB) map(from: result)
 
   // Check value ( using relative error ) and print result to standard output
   double check = (double)(N) * (double)(N - 1) * (double)(2*N - 1) / 3.0;
