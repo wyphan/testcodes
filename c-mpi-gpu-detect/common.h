@@ -1,9 +1,6 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-// Global variables
-int myid, nranks;
-
 // Error types for parabort
 typedef enum errtype_t
   { ERR_TYPE_MPI,
@@ -14,12 +11,13 @@ typedef enum errtype_t
 // Wrapper for MPI_Abort
 //
 // Inputs:
+// - int rank = current MPI rank
 // - enum errtype_t = error type
 // - int errcode = error code to relay into MPI_Abort
 // - char* errmsg = error message for ERR_TYPE_CUSTOM error type
 //
 void parabort
-( enum errtype_t errtype, int errcode, const char* errmsg );
+( const int rank, enum errtype_t errtype, int errcode, const char* errmsg );
 
 // Get MPI current rank and the total number of ranks.
 //
@@ -41,16 +39,22 @@ const char* get_gpu_api_name
 //
 // Returns: number of detected GPUs for the current rank,
 //
+// Input:
+// - int rank = current MPI rank
+//
 // Outputs:
 // - char** *luid = GPU local IDs for the current rank
 // - char** *name = GPU names for the current rank
 //
 int find_GPUs
-( char*** luid, char*** name );
+( const int rank,
+  char*** luid, char*** name );
 
 // Collect GPU info from each rank to rank 0.
 //
 // Inputs:
+// - int rank = current MPI rank
+// - int nranks = total number of MPI ranks
 // - int ngpus = number of GPUs for the current rank
 // - char** luid = GPU local IDs for the current rank
 // - char** name = GPU names for the current rank
@@ -63,7 +67,7 @@ int find_GPUs
 // - char** *name_list = List of all GPU names
 //
 int collect_GPUs
-( const int ngpus, char** luid, char** name,
+( const int rank, const int nranks, const int ngpus, char** luid, char** name,
   int** ngpu_list, char*** luid_list, char*** name_list );
 
 // Print GPU info to stdout.

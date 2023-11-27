@@ -7,11 +7,11 @@
 #include "common.h"
 
 // Helper macro for error checking
-#define CUDA_CHECK(command) {             \
-  cudaError_t status = command;           \
-  if ( status != cudaSuccess ) {          \
-    parabort(ERR_TYPE_GPU, status, NULL); \
-  }				          \
+#define CUDA_CHECK(rank, command) {             \
+  cudaError_t status = command;                 \
+  if ( status != cudaSuccess ) {                \
+    parabort(rank, ERR_TYPE_GPU, status, NULL);	\
+  }                                             \
 }
 
 const char* get_gpu_api_name () {
@@ -22,20 +22,23 @@ const char* get_gpu_api_name () {
 ///
 // Returns: number of detected GPUs at each rank,
 //
+// Input:
+// - int rank = current MPI rank
+//
 // Outputs:
 // - char** *addr = PCI domain, bus, and device ID addresses for each GPU
 // - char** *name = GPU names
 //
-int find_GPUs(char*** addr, char*** name) {
+int find_GPUs(const int rank, char*** addr, char*** name) {
 
   int ngpus = 0;
-  CUDA_CHECK( cudaGetDeviceCount(&ngpus) );
+  CUDA_CHECK(rank, cudaGetDeviceCount(&ngpus) );
   if (ngpus > 0) {
     *addr = (char**)malloc( ngpus * sizeof(char*) );
     *name = (char**)malloc( ngpus * sizeof(char*) );
     for (unsigned int g = 0; g < ngpus; g++) {
       struct cudaDeviceProp prop;
-      CUDA_CHECK( cudaGetDeviceProperties(&prop, g) );
+      CUDA_CHECK(rank, cudaGetDeviceProperties(&prop, g) );
       int pci_dom = prop.pciDomainID;
       int pci_bus = prop.pciBusID;
       int pci_dev = prop.pciDeviceID;
