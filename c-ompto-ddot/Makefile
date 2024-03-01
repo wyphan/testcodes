@@ -22,7 +22,7 @@ CCNAME = $(notdir $(CC))
 build: checkgpuarch ddot.$(CCNAME).x
 
 clean:
-	-rm -rf *.x
+	-rm -rf *.o *.x
 
 distclean: clean
 	-rm -rf core
@@ -30,7 +30,7 @@ distclean: clean
 
 ifeq ("$(ARCH)","")
 checkgpuarch:
-	$(error Usage: make ARCH=<comma-separated_list_of_gpu_arches>)
+	$(error Usage: make ARCH=<comma-separated_list_of_gpu_arches> CC=<compiler>)
 else
 checkgpuarch:
 	@echo ARCH = $(ARCH)
@@ -61,7 +61,19 @@ else ifeq ("amdclang","$(findstring amdclang,$(CCNAME))")
 
   OMPFLAGS = -fopenmp
   ARCHLIST = $(call ssl,$(ARCH))
-  ARCHFLAGS = $(foreach arch,$(ARCHLIST),--offload-arch=$(arch))
+  ARCHFLAGS = --offload-arch=$(ARCH)
+  OMPTGTFLAGS = $(ARCHFLAGS)
+
+else ifeq ("clang","$(findstring clang,$(CCNAME))")
+
+  OMPFLAGS = -fopenmp
+  ARCHLIST = $(call ssl,$(ARCH))
+
+  ifeq ("sm","$(findstring sm,$(ARCHLIST))")
+    ARCHFLAGS = -fopenmp-targets=nvptx64-nvidia-cuda $(foreach arch,$(ARCHLIST),-Xopenmp-target=nvptx-nvidia-cuda -march=$(arch))
+  else ifeq ("gfx","$(findstring gfx,$(ARCHLIST))")
+    ARCHFLAGS = -fopenmp-targets=amdgcn-amd-amdhsa $(foreach arch,$(ARCHLIST),-Xopenmp-target=amdgcn-amd-amdhsa -march=$(arch))
+  endif
   OMPTGTFLAGS = $(ARCHFLAGS)
 
 else ifeq ("icx","$(findstring icx,$(CCNAME))")
@@ -77,7 +89,7 @@ endif
 ###############################################################################
 
 CFLAGS = -g -O2
-LDFLAGS =
+LDFLAGS = -O2
 
 ddot.$(CCNAME).x: ddot.c
 	$(CC) $(CFLAGS) $(OMPFLAGS) $(OMPTGTFLAGS) $< $(LDFLAGS) -o $@
