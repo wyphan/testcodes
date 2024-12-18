@@ -1,23 +1,23 @@
 PROGRAM dot_product
+
+  ! Precision constants (Fortran 2008)
+  USE iso_fortran_env, ONLY: dp => real64, longlong => int64
+
   IMPLICIT NONE
 
-  ! Precision constants
-  INTEGER, PARAMETER :: dp = SELECTED_REAL_KIND(14,100) ! 64-bit (double)
-
   ! Vector dimension
-  INTEGER :: N
+  INTEGER(KIND=longlong) :: N
 
   ! Loop index
-  INTEGER :: i
+  INTEGER(KIND=longlong) :: i
 
   ! Vectors to take the dot product with
   REAL(KIND=dp), DIMENSION(:), ALLOCATABLE :: vecA, vecB
 
-  ! Result and check value
+  ! Result validation
+  INTRINSIC :: LOG
   REAL(KIND=dp) :: result, check
-
-  ! Tolerance for error checking
-  REAL(KIND=dp), PARAMETER :: tol = 10._dp**(-10)
+  REAL(KIND=dp), PARAMETER :: tol = 1.0E-7_dp
 
   ! Timing subroutine
   INTRINSIC :: DATE_AND_TIME
@@ -29,31 +29,31 @@ PROGRAM dot_product
   ! argc, argv (Fortran 2003)
   INTRINSIC :: COMMAND_ARGUMENT_COUNT, GET_COMMAND_ARGUMENT
   INTEGER :: argc
-  CHARACTER(LEN=8) :: argv ! We only need one
+  CHARACTER(LEN=12) :: argv ! We only need one
 
   ! Check argc
   IF( COMMAND_ARGUMENT_COUNT() > 0 ) THEN
 
      ! Read n from argv[1]
      CALL GET_COMMAND_ARGUMENT( 1, VALUE=argv )
-     READ( argv, * ) n
+     READ( argv, * ) N
 
   ELSE
 
      ! Read n from standard input
-     WRITE(*,*) 'Input vector length n:'
-     READ(*,*) n
+     WRITE(*,*) 'Input vector length N:'
+     READ(*,*) N
 
   END IF
 
   ! Echo n to standard output
-  WRITE(*,*) 'Using n = ', n
+  WRITE(*,*) 'Using N = ', N
 
   CALL DATE_AND_TIME( values=t0 )
 
   ! Allocate vectors on CPU
-  ALLOCATE( vecA(n) )
-  ALLOCATE( vecB(n) )
+  ALLOCATE( vecA(N) )
+  ALLOCATE( vecB(N) )
 
   ! Allocate vectors and result variable on device (GPU)
   !$ACC DATA CREATE( vecA, vecB, result )
@@ -83,17 +83,18 @@ PROGRAM dot_product
      result = result + vecA(i) * vecB(i)
   END DO ! i
   !$ACC END PARALLEL LOOP
+  !$ACC WAIT
 
   CALL DATE_AND_TIME( values=t2 )
 
   ! Fetch result from device
   !$ACC UPDATE HOST( result )
 
-  ! Check value ( using relative error ) and print result to standard output
-  check = REAL( N, KIND=dp ) * REAL( N+1, KIND=dp ) * REAL( 2*N+1, KIND=dp) &
-          / 3._dp
-  IF( ABS( result/check - 1 ) > tol ) THEN
-     WRITE(*,*) 'Error! Result = ', result, ' when it should be ', check
+  ! Validate result using logarithmic error
+  check = LOG(REAL(N, KIND=dp)) + LOG(REAL(N, KIND=dp)+1) &
+          + LOG(2*REAL(N, KIND=dp)+1) - LOG(3._dp)
+  IF( ABS( LOG(result) - check ) > tol ) THEN
+     WRITE(*,*) 'Error! log(result) = ', LOG(result), ' when it should be ', check
   ELSE
      WRITE(*,*) 'Success! Result = ', result
   END IF
