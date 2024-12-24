@@ -99,6 +99,9 @@ PROGRAM dot_product
      WRITE(*,*) 'Success! Result = ', result
   END IF
 
+  ! Close off data region
+  !$ACC END DATA
+
   ! Calculate and display timers
   time_init = REAL( 3600*t1(5) + 60*t1(6) + t1(7), KIND=dp ) &
               + 0.001_dp*REAL( t1(8), KIND=dp ) &
@@ -112,7 +115,6 @@ PROGRAM dot_product
   WRITE(*,'(A,F8.3,A)') 'Computation took ', time_ddot, ' seconds.'
   
   ! Clean up
-  !$ACC END DATA
   DEALLOCATE( vecA )
   DEALLOCATE( vecB )
 
