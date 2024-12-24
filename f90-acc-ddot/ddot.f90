@@ -34,19 +34,19 @@ PROGRAM dot_product
   ! Check argc
   IF( COMMAND_ARGUMENT_COUNT() > 0 ) THEN
 
-     ! Read n from argv[1]
+     ! Read vector length from argv[1]
      CALL GET_COMMAND_ARGUMENT( 1, VALUE=argv )
      READ( argv, * ) N
 
   ELSE
 
-     ! Read n from standard input
+     ! Read vector length from standard input
      WRITE(*,*) 'Input vector length N:'
      READ(*,*) N
 
   END IF
 
-  ! Echo n to standard output
+  ! Echo vector length to standard output
   WRITE(*,*) 'Using N = ', N
 
   CALL DATE_AND_TIME( values=t0 )
