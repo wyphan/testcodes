@@ -1,5 +1,7 @@
 # Temporary object files
 **/*.o
+**/*.mod
+**/*.smod
 
 # Executables
 **/*.x
