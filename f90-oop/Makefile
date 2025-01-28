@@ -1,6 +1,6 @@
 FC = gfortran
 FCFLAGS = -O2 -ggdb
-LDFLAGS = -ggdb
+LDFLAGS = -g
 
 EXE = clasmech.$(FC).x
 
