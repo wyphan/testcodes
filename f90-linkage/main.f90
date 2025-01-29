@@ -56,6 +56,6 @@ END PROGRAM fortran_linkage
 SUBROUTINE my_implicit_iface_sub(arg)
   IMPLICIT NONE
   INTEGER, INTENT(IN) :: arg
-  PRINT *, "my_implicit_iface_fn is a subroutine in the same file as the main program", &
+  PRINT *, "my_implicit_iface_sub is a subroutine in the same file as the main program", &
            " and called with argument ", arg
 END SUBROUTINE my_implicit_iface_sub
