@@ -13,6 +13,8 @@ all: ${EXE}
 ${EXE}: main.o my_module.o my_explicit_iface_fn.o my_external_f77_sub.o my_c_fn.o
 	$(FC) -o $(EXE) $^ $(LDFLAGS)
 
+main.o: my_module.o my_explicit_iface_fn.o my_external_f77_sub.o my_c_fn.o
+
 %.f:
 %.o: %.f
 	$(FC) $(FCFLAGS) -c -o $@ $<
