@@ -5,7 +5,8 @@ PROGRAM omp_hello
 #endif /* _OPENMP */
 
   ! Internal variables
-  INTEGER :: nthreads, tid
+  INTEGER :: nthreads = 0
+  INTEGER :: tid = 0
 
   !$OMP PARALLEL PRIVATE(tid)
 
